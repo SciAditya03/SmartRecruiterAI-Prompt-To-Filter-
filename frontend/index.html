@@ -1,0 +1,56 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <title>SmartRecruit AI</title>
+    <style>
+        body { font-family: sans-serif; max-width: 800px; margin: 0 auto; padding: 20px; }
+        textarea { width: 100%; height: 100px; margin-bottom: 10px; }
+        button { padding: 10px 20px; background: #007bff; color: white; border: none; cursor: pointer; }
+        .card { border: 1px solid #ddd; padding: 15px; margin-bottom: 10px; border-radius: 5px; }
+        .score { font-weight: bold; color: green; }
+        .skills { color: #555; font-size: 0.9em; }
+    </style>
+</head>
+<body>
+    <h1>SmartRecruit AI</h1>
+    <h3>Paste Job Description:</h3>
+    <textarea id="jdInput" placeholder="Looking for a Python developer with Machine Learning skills, graduating in 2025..."></textarea>
+    <button onclick="searchCandidates()">Find Candidates</button>
+
+    <div id="results" style="margin-top: 20px;"></div>
+
+    <script>
+        async function searchCandidates() {
+            const jd = document.getElementById('jdInput').value;
+            const resultsDiv = document.getElementById('results');
+            resultsDiv.innerHTML = "Searching...";
+
+            try {
+                const response = await fetch('/api/v1/search/', {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({ job_description: jd, limit: 10 })
+                });
+                const data = await response.json();
+                
+                resultsDiv.innerHTML = `<h3>Found ${data.total_results} matches</h3>`;
+                
+                data.candidates.forEach(c => {
+                    resultsDiv.innerHTML += `
+                        <div class="card">
+                            <h4>${c.full_name} <span class="score">(${c.match_score} pts)</span></h4>
+                            <p><b>${c.university}</b> - ${c.major} (${c.graduation_year})</p>
+                            <p class="skills"><b>Skills:</b> ${c.professional_skills}</p>
+                            <p><b>Matched:</b> ${c.matched_skills.join(', ') || 'None'}</p>
+                            <p><i>${c.explanation}</i></p>
+                        </div>
+                    `;
+                });
+            } catch (error) {
+                resultsDiv.innerHTML = "Error: " + error;
+            }
+        }
+    </script>
+</body>
+</html>
